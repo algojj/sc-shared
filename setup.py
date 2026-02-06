@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="smallcaps-shared",
-    version="1.1.6",
+    version="1.2.0",
     description="Shared library for SmallCaps Scanner microservices",
     packages=find_packages(),
     package_data={

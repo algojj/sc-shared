@@ -52,12 +52,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger dependent services - bump version and release
+      - name: Trigger dependent services rebuild
         env:
           GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
-          SHARED_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          echo "Creating new releases in all dependent services..."
+          echo "Triggering rebuild of all dependent services..."
           REPOS=(
             sc-scanner-gap
             sc-scanner-momentum
@@ -73,34 +72,7 @@ jobs:
             sc-strat-gus
           )
           for repo in "${REPOS[@]}"; do
-            echo "Processing algojj/$repo..."
-
-            # Get current version from VERSION file
-            CURRENT=$(gh api repos/algojj/$repo/contents/VERSION --jq '.content' 2>/dev/null | base64 -d | tr -d '\n' || echo "3.22.3")
-
-            # Bump patch version
-            MAJOR=$(echo $CURRENT | cut -d. -f1)
-            MINOR=$(echo $CURRENT | cut -d. -f2)
-            PATCH=$(echo $CURRENT | cut -d. -f3)
-            NEW_PATCH=$((PATCH + 1))
-            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
-
-            echo "  $repo: $CURRENT -> $NEW_VERSION (sc-shared update to v$SHARED_VERSION)"
-
-            # Update VERSION file
-            gh api repos/algojj/$repo/contents/VERSION \
-              -X PUT \
-              -f message="chore: bump to v$NEW_VERSION (sc-shared v$SHARED_VERSION)" \
-              -f content=$(echo -n "$NEW_VERSION" | base64) \
-              -f sha=$(gh api repos/algojj/$repo/contents/VERSION --jq '.sha' 2>/dev/null || echo "") \
-              2>/dev/null || echo "  Could not update VERSION file"
-
-            # Create release (triggers deploy.yml)
-            gh release create "v$NEW_VERSION" \
-              -R algojj/$repo \
-              --title "v$NEW_VERSION" \
-              --notes "Automated release: sc-shared updated to v$SHARED_VERSION" \
-              2>/dev/null || echo "  Could not create release for $repo"
-
+            echo "Triggering algojj/$repo..."
+            gh workflow run deploy.yml -R algojj/$repo || echo "Failed to trigger $repo (may not exist yet)"
           done
-          echo "All dependent services updated!"
+          echo "All dependent services triggered!"

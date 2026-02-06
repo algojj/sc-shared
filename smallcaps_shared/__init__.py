@@ -1,8 +1,9 @@
 """SmallCaps Shared Library for Microservices"""
 
-__version__ = "1.1.6"
+__version__ = "1.2.0"
 
 from .models import ScanResult, ScannerType, HealthStatus
+from .signal_dispatcher import StrategySignal, StrategySignalDispatcher, DispatchResult
 from .redis_client import RedisClient, CacheKeys
 from .polygon_base import PolygonBaseClient
 from .settings import BaseSettings, DatabaseSettings
@@ -71,6 +72,9 @@ __all__ = [
     "ScanResult",
     "ScannerType",
     "HealthStatus",
+    "StrategySignal",
+    "StrategySignalDispatcher",
+    "DispatchResult",
     "RedisClient",
     "CacheKeys",
     "PolygonBaseClient",
