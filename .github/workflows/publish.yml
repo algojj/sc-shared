@@ -51,3 +51,28 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger dependent services rebuild
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+        run: |
+          echo "Triggering rebuild of all dependent services..."
+          REPOS=(
+            sc-scanner-gap
+            sc-scanner-momentum
+            sc-scanner-breakout
+            sc-scanner-gapfade
+            sc-scanner-afterhours
+            sc-scanner-swing
+            sc-scanner-multiday
+            sc-scanner-premarket
+            sc-strat-bht
+            sc-strat-mfl
+            sc-strat-climax
+            sc-strat-gus
+          )
+          for repo in "${REPOS[@]}"; do
+            echo "Triggering algojj/$repo..."
+            gh workflow run deploy.yml -R algojj/$repo || echo "Failed to trigger $repo (may not exist yet)"
+          done
+          echo "All dependent services triggered!"
