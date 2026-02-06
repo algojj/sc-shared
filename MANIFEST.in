@@ -1,0 +1,2 @@
+include smallcaps_shared/data/*.json
+recursive-include smallcaps_shared/data *
