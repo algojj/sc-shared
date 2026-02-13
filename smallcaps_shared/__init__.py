@@ -34,6 +34,7 @@ from .market_status import (
     get_market_status
 )
 from .logging_config import StructuredLogger, JsonFormatter, get_logger as get_structured_logger, get_db_wrapper, setup_json_logging
+from .trade_persistence import save_trade_entry, save_trade_exit
 from .circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
@@ -136,4 +137,6 @@ __all__ = [
     "get_structured_logger",
     "get_db_wrapper",
     "setup_json_logging",
+    "save_trade_entry",
+    "save_trade_exit",
 ]
