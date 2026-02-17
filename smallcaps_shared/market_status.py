@@ -146,13 +146,23 @@ class MarketStatusChecker:
         if target_date.weekday() >= 5:  # Saturday = 5, Sunday = 6
             return False
 
-        # Check holidays
+        # Check hardcoded holiday calendar first (always accurate, even for past dates)
+        try:
+            from smallcaps_shared.sessionizer import HolidayCalendar
+            is_holiday, holiday_name = HolidayCalendar.is_holiday(target_date)
+            if is_holiday:
+                logger.info(f"[MARKET_STATUS] {target_date} is a holiday (calendar): {holiday_name}")
+                return False
+        except Exception as e:
+            logger.debug(f"[MARKET_STATUS] HolidayCalendar fallback failed: {e}")
+
+        # Check Polygon API upcoming holidays (only has future dates)
         holidays = await self.get_upcoming_holidays()
         target_str = target_date.strftime('%Y-%m-%d')
 
         for holiday in holidays:
             if holiday.get('date') == target_str and holiday.get('status') == 'closed':
-                logger.info(f"[MARKET_STATUS] {target_date} is a holiday: {holiday.get('name')}")
+                logger.info(f"[MARKET_STATUS] {target_date} is a holiday (API): {holiday.get('name')}")
                 return False
 
         return True
