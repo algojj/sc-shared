@@ -162,7 +162,7 @@ class RedisClient:
                 return False
 
             if isinstance(value, (dict, list)):
-                value = json.dumps(value)
+                value = json.dumps(value, default=str)
 
             # Handle TTL - None or 0 means no expiry
             if ttl is None or ttl == 0:
@@ -258,7 +258,7 @@ class RedisClient:
             json_values = []
             for value in values:
                 if isinstance(value, (dict, list)):
-                    json_values.append(json.dumps(value))
+                    json_values.append(json.dumps(value, default=str))
                 else:
                     json_values.append(str(value))
 
@@ -365,7 +365,7 @@ class RedisClient:
             processed_values = []
             for value in values:
                 if isinstance(value, (dict, list)):
-                    processed_values.append(json.dumps(value))
+                    processed_values.append(json.dumps(value, default=str))
                 else:
                     processed_values.append(str(value))
 
@@ -386,7 +386,7 @@ class RedisClient:
             processed_fields = {}
             for key, value in fields.items():
                 if isinstance(value, (dict, list)):
-                    processed_fields[key] = json.dumps(value)
+                    processed_fields[key] = json.dumps(value, default=str)
                 else:
                     processed_fields[key] = str(value)
 
@@ -466,7 +466,7 @@ class RedisClient:
 
         try:
             if isinstance(value, (dict, list)):
-                value = json.dumps(value)
+                value = json.dumps(value, default=str)
 
             await self.redis_client.hset(key, field, value)
             logger.debug(f"[REDIS] HSET {key}:{field}")
