@@ -176,6 +176,10 @@ class DatabaseService:
             logger.error(f"[DB] Error fetching rows: {e}", exc_info=True)
             return []
 
+    async def fetch(self, query: str, *args, **kwargs):
+        """Alias for fetch_all (asyncpg compat)"""
+        return await self.fetch_all(query, *args, **kwargs)
+
     async def save_scan_results(self, scanner_type: str, results: List[ScanResult]):
         """Save scanner results to scan_history table"""
         if not self.conn_pool:
