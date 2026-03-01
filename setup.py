@@ -1,8 +1,13 @@
+import os
 from setuptools import setup, find_packages
+
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, "VERSION")) as f:
+    version = f.read().strip()
 
 setup(
     name="smallcaps-shared",
-    version="1.2.0",
+    version=version,
     description="Shared library for SmallCaps Scanner microservices",
     packages=find_packages(),
     package_data={
