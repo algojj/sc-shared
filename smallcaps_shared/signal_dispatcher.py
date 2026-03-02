@@ -290,7 +290,7 @@ class StrategySignalDispatcher:
                     OR filters->'strategies' @> $1::jsonb
                   )
             """
-            rows = await self.db.fetch(query, f'["{strategy}"]')
+            rows = await self.db.fetch_all(query, f'["{strategy}"]')
 
             webhooks = []
             for row in rows:
