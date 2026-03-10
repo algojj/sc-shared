@@ -1,6 +1,7 @@
 """Base Polygon client for microservices with Circuit Breaker"""
 
 import os
+import re
 import httpx
 import logging
 from typing import Optional, List, Dict, Any
@@ -14,6 +15,10 @@ from .circuit_breaker import (
 )
 
 logger = logging.getLogger(__name__)
+
+def _redact_api_key(text: str) -> str:
+    """Redact apiKey values from log-safe text"""
+    return re.sub(r'(apiKey=)[^&\s]+', r'\1***REDACTED***', str(text))
 
 # Default Polygon circuit breaker config
 POLYGON_CB_CONFIG = CircuitBreakerConfig(
@@ -74,9 +79,10 @@ class PolygonBaseClient:
         params["apiKey"] = self.api_key
         url = f"{self.base_url}{endpoint}"
 
+        safe_params = {k: ("***REDACTED***" if k == "apiKey" else v) for k, v in params.items()}
         logger.warning(f"🔍 [POLYGON REQUEST] Endpoint: {endpoint}")
         logger.warning(f"🔍 [POLYGON REQUEST] Full URL: {url}")
-        logger.warning(f"🔍 [POLYGON REQUEST] Params: {params}")
+        logger.warning(f"🔍 [POLYGON REQUEST] Params: {safe_params}")
 
         response = await self.client.get(url, params=params)
         response.raise_for_status()
@@ -118,10 +124,10 @@ class PolygonBaseClient:
             try:
                 return await self._raw_get(endpoint, params)
             except httpx.HTTPError as e:
-                logger.error(f"❌ [POLYGON ERROR] HTTP error for {endpoint}: {e}")
+                logger.error(f"❌ [POLYGON ERROR] HTTP error for {endpoint}: {_redact_api_key(e)}")
                 return None
             except Exception as e:
-                logger.error(f"❌ [POLYGON ERROR] Unexpected error for {endpoint}: {e}")
+                logger.error(f"❌ [POLYGON ERROR] Unexpected error for {endpoint}: {_redact_api_key(e)}")
                 return None
 
     async def get_snapshot_gainers(self) -> List[Dict]:

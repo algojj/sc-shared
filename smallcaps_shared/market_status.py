@@ -7,12 +7,17 @@ Includes caching to avoid excessive API calls.
 import asyncio
 import logging
 import os
+import re
 from datetime import datetime, timedelta, date, timezone
 from typing import Dict, Any, Optional, List
 import aiohttp
 import pytz
 
 logger = logging.getLogger(__name__)
+
+def _redact_api_key(text: str) -> str:
+    """Redact apiKey values from log-safe text"""
+    return re.sub(r'(apiKey=)[^&\s]+', r'\1***REDACTED***', str(text))
 
 ET_TZ = pytz.timezone('America/New_York')
 
@@ -76,7 +81,7 @@ class MarketStatusChecker:
                         return self._get_fallback_status()
 
         except Exception as e:
-            logger.error(f"[MARKET_STATUS] Error fetching status: {e}")
+            logger.error(f"[MARKET_STATUS] Error fetching status: {_redact_api_key(e)}")
             return self._get_fallback_status()
 
     async def get_upcoming_holidays(self, use_cache: bool = True) -> List[Dict[str, Any]]:
@@ -112,7 +117,7 @@ class MarketStatusChecker:
                         return []
 
         except Exception as e:
-            logger.error(f"[MARKET_STATUS] Error fetching holidays: {e}")
+            logger.error(f"[MARKET_STATUS] Error fetching holidays: {_redact_api_key(e)}")
             return []
 
     async def is_market_open(self) -> bool:
