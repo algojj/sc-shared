@@ -332,7 +332,7 @@ class TelegramNotifier:
                 if len(logs) > 5:
                     message += f"\n<i>...y {len(logs) - 5} logs más</i>"
 
-            message += f"\n\n<i>Frontend: http://15.235.115.4</i>"
+            message += f"\n\n<i>Frontend: http://108.165.47.42</i>"
 
             # Telegram has a 4096 character limit per message
             if len(message) > 4096:
@@ -533,7 +533,7 @@ class TelegramNotifier:
 
             telegram_msg += f"\n\n<b>Alert Details:</b>\n<pre>{json.dumps(alert_data, indent=2, default=str)[:1000]}</pre>"
 
-            telegram_msg += f"\n\n<i>Frontend: http://15.235.115.4</i>"
+            telegram_msg += f"\n\n<i>Frontend: http://108.165.47.42</i>"
 
             return await self.send_message(telegram_msg, parse_mode="HTML", subscription_type='bugs_only')
 

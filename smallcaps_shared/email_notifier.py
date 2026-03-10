@@ -331,7 +331,7 @@ Please investigate and resolve the issue as soon as possible.
 
                 <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 11px;">
                     Reported via SmallCaps Scanner - Alert Report System<br>
-                    Frontend: http://15.235.115.4<br>
+                    Frontend: http://108.165.47.42<br>
                     Time: {timestamp}
                 </p>
             </body>
@@ -353,7 +353,7 @@ Alert Details:
 
 ---
 Reported via SmallCaps Scanner - Alert Report System
-Frontend: http://15.235.115.4
+Frontend: http://108.165.47.42
 Time: {timestamp}
 """
 
@@ -483,7 +483,7 @@ Time: {timestamp}
                     <li><strong>URL:</strong> {url}</li>
                     <li><strong>User Agent:</strong> {user_agent}</li>
                     <li><strong>Timestamp:</strong> {timestamp}</li>
-                    {f'<li><strong>Screenshot:</strong> <a href="http://15.235.115.4{screenshot_url}">{screenshot_url}</a></li>' if screenshot_url else ''}
+                    {f'<li><strong>Screenshot:</strong> <a href="http://108.165.47.42{screenshot_url}">{screenshot_url}</a></li>' if screenshot_url else ''}
                 </ul>
 
                 {f'<h3>📊 Datos de la alerta (rowData):</h3>{row_data_html}' if row_data_html else ''}
@@ -494,7 +494,7 @@ Time: {timestamp}
 
                 <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 11px;">
                     Reported via SmallCaps Scanner - Bug Report System<br>
-                    Frontend: <a href="http://15.235.115.4">http://15.235.115.4</a><br>
+                    Frontend: <a href="http://108.165.47.42">http://108.165.47.42</a><br>
                     Time: {timestamp}
                 </p>
             </body>
@@ -507,7 +507,7 @@ Time: {timestamp}
                 row_data_text = "\n".join([f"  • {k}: {v}" for k, v in row_data.items()])
 
             # Extract text sections to avoid f-string backslash issues
-            screenshot_text = f'• Screenshot: http://15.235.115.4{screenshot_url}' if screenshot_url else ''
+            screenshot_text = f'• Screenshot: http://108.165.47.42{screenshot_url}' if screenshot_url else ''
             row_data_section = f'📊 Datos de la alerta (rowData):\n{row_data_text}\n' if row_data_text else ''
             row_html_section = f'🔍 HTML de la fila:\n---\n{row_html[:2000]}\n---\n' if row_html else ''
             logs_section = f'Logs (últimos {len(logs or [])} eventos):\n---\n{logs_html}\n---\n' if logs else ''
@@ -539,7 +539,7 @@ Origen del reporte:
 
 ---
 Reported via SmallCaps Scanner - Bug Report System
-Frontend: http://15.235.115.4
+Frontend: http://108.165.47.42
 Time: {timestamp}
 """
 

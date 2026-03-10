@@ -42,7 +42,7 @@ class JobLogger:
         """Create database connection pool if not provided"""
         if self.pool is None:
             self.pool = await asyncpg.create_pool(
-                host=os.getenv('DB_HOST', '15.235.115.4'),
+                host=os.getenv('DB_HOST', '108.165.47.42'),
                 port=int(os.getenv('DB_PORT', '5433')),
                 user=os.getenv('DB_USER', 'smallcaps_admin'),
                 password=os.getenv('DB_PASSWORD', 'SmallCaps2025'),
