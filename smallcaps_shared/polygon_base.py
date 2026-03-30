@@ -2,6 +2,7 @@
 
 import os
 import re
+import time
 import httpx
 import logging
 from typing import Optional, List, Dict, Any
@@ -34,6 +35,14 @@ POLYGON_CB_CONFIG = CircuitBreakerConfig(
 
 class PolygonBaseClient:
     """Base Polygon API client with Circuit Breaker protection"""
+
+    # Tickers that Polygon consistently doesn't return in snapshots.
+    # Tracked automatically: after 5 consecutive misses a ticker is suppressed
+    # from the warning log for 1 hour to reduce noise.
+    _snapshot_missing_cache: Dict[str, int] = {}   # ticker -> consecutive miss count
+    _snapshot_suppressed: Dict[str, float] = {}     # ticker -> suppressed_until (timestamp)
+    SNAPSHOT_MISS_THRESHOLD = 5       # misses before suppression
+    SNAPSHOT_SUPPRESS_SECS = 3600     # suppress warnings for 1 hour
 
     def __init__(
         self,
@@ -207,14 +216,37 @@ class PolygonBaseClient:
             # Create a map for quick lookup
             ticker_map = {t.get("ticker"): t for t in tickers_data}
 
-            # Log any mismatches
+            # Log mismatches with suppression for chronic missing tickers
             returned_tickers = set(ticker_map.keys())
             requested_set = set(tickers)
             if returned_tickers != requested_set:
                 missing = requested_set - returned_tickers
                 extra = returned_tickers - requested_set
+
                 if missing:
-                    logger.warning(f"⚠️ [get_snapshot_tickers] Missing tickers: {missing}")
+                    now = time.time()
+                    new_missing = set()
+                    for t in missing:
+                        cls = self.__class__
+                        cls._snapshot_missing_cache[t] = cls._snapshot_missing_cache.get(t, 0) + 1
+                        if cls._snapshot_missing_cache[t] >= cls.SNAPSHOT_MISS_THRESHOLD:
+                            if now < cls._snapshot_suppressed.get(t, 0):
+                                continue  # suppressed
+                            cls._snapshot_suppressed[t] = now + cls.SNAPSHOT_SUPPRESS_SECS
+                            logger.info(f"[get_snapshot_tickers] Suppressing {t} (missing {cls._snapshot_missing_cache[t]}x, likely delisted)")
+                        else:
+                            new_missing.add(t)
+                    if new_missing:
+                        logger.warning(f"⚠️ [get_snapshot_tickers] Missing tickers ({len(new_missing)}): {new_missing}")
+                    suppressed_count = len(missing) - len(new_missing)
+                    if suppressed_count > 0:
+                        logger.debug(f"[get_snapshot_tickers] {suppressed_count} chronic missing tickers suppressed")
+
+                # Reset miss counter for tickers that came back
+                for t in returned_tickers:
+                    self.__class__._snapshot_missing_cache.pop(t, None)
+                    self.__class__._snapshot_suppressed.pop(t, None)
+
                 if extra:
                     logger.warning(f"⚠️ [get_snapshot_tickers] Extra tickers returned: {extra}")
 
