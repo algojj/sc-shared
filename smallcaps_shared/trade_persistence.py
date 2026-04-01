@@ -79,6 +79,7 @@ async def save_trade_exit(
             return False
 
         if not trade_id:
+            logger.warning("[TRADE_DB] save_trade_exit called with trade_id=None, skipping DB update")
             return False
 
         await db.execute(
@@ -104,3 +105,48 @@ async def save_trade_exit(
     except Exception as e:
         logger.error(f"[TRADE_DB] Error saving exit for trade #{trade_id}: {e}")
         return False
+
+
+async def recover_trade_id(db, strategy_name: str, ticker: str) -> Optional[int]:
+    """Recover a trade's DB id by strategy_name + ticker when db_id is lost (e.g. after restart)."""
+    try:
+        if not db or not db.conn_pool:
+            return None
+        row = await db.fetch_one(
+            """SELECT id FROM strategy_trades
+               WHERE strategy_name = $1 AND ticker = $2 AND status = 'ACTIVE'
+               ORDER BY entry_time DESC LIMIT 1""",
+            strategy_name, ticker,
+        )
+        if row:
+            logger.info(f"[TRADE_DB] Recovered trade_id={row['id']} for {strategy_name} {ticker}")
+            return row["id"]
+        return None
+    except Exception as e:
+        logger.error(f"[TRADE_DB] Error recovering trade_id for {ticker}: {e}")
+        return None
+
+
+async def close_stale_trades(db, strategy_name: str, cutoff_reason: str = "EOD_STALE") -> int:
+    """Close all ACTIVE trades for a strategy from previous days. Call on startup.
+    Returns number of trades closed."""
+    try:
+        if not db or not db.conn_pool:
+            return 0
+        result = await db.execute(
+            """UPDATE strategy_trades
+               SET status = 'EXPIRED', exit_reason = $1,
+                   exit_time = NOW(), updated_at = NOW(),
+                   exit_price = entry_price,
+                   pnl_pct = 0
+               WHERE strategy_name = $2 AND status = 'ACTIVE'
+                 AND entry_time < (NOW() AT TIME ZONE 'America/New_York')::date::timestamptz""",
+            cutoff_reason, strategy_name,
+        )
+        count = int(result.split()[-1]) if result and result.split()[-1].isdigit() else 0
+        if count > 0:
+            logger.warning(f"[TRADE_DB] Closed {count} stale ACTIVE trades for {strategy_name}")
+        return count
+    except Exception as e:
+        logger.error(f"[TRADE_DB] Error closing stale trades for {strategy_name}: {e}")
+        return 0
