@@ -39,7 +39,7 @@ jobs:
       - name: Build Docker image
         run: |
           if [ -f Dockerfile ]; then
-            docker build --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} -t test-build .
+            docker build -t test-build .
             echo "Build successful"
           else
             echo "No Dockerfile found, skipping build"
