@@ -72,7 +72,7 @@ jobs:
             sc-strat-gus
           )
           for repo in "${REPOS[@]}"; do
-            echo "Triggering algojj/$repo..."
-            gh workflow run deploy.yml -R algojj/$repo || echo "Failed to trigger $repo (may not exist yet)"
+            echo "Triggering Smallygon/$repo..."
+            gh workflow run deploy.yml -R Smallygon/$repo || echo "Failed to trigger $repo (may not exist yet)"
           done
           echo "All dependent services triggered!"
