@@ -52,27 +52,56 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger dependent services rebuild
+      - name: Bump vendor/smallcaps_shared in dependent monorepos
         env:
           GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
         run: |
-          echo "Triggering rebuild of all dependent services..."
+          # Monorepos that vendor sc-shared as a git submodule under
+          # vendor/smallcaps_shared (their Dockerfiles `pip install` that path).
+          # Bumping the submodule pointer triggers each repo's own deploy.yml.
+          # NOTE: the legacy `sc-scanner-*` and `sc-strat-*` repos that lived
+          # here have been archived as `deprecated-*` and consolidated into
+          # codesmall-strategies / market-scanners-service.
           REPOS=(
-            sc-scanner-gap
-            sc-scanner-momentum
-            sc-scanner-breakout
-            sc-scanner-gapfade
-            sc-scanner-afterhours
-            sc-scanner-swing
-            sc-scanner-multiday
-            sc-scanner-premarket
-            sc-strat-bht
-            sc-strat-mfl
-            sc-strat-climax
-            sc-strat-gus
+            codesmall-strategies
+            market-scanners-service
+            research-service
+            monitoring-service
+            news-service
+            trading-api-service
+            volume-signal-service
+            session-reports-service
           )
+          SHARED_SHA="${{ github.sha }}"
+          git config --global user.email "actions@github.com"
+          git config --global user.name "sc-shared release bot"
           for repo in "${REPOS[@]}"; do
-            echo "Triggering Smallygon/$repo..."
-            gh workflow run deploy.yml -R Smallygon/$repo || echo "Failed to trigger $repo (may not exist yet)"
+            echo "::group::Bumping Smallygon/$repo"
+            tmp=$(mktemp -d)
+            if ! git clone --recurse-submodules "https://x-access-token:${GH_TOKEN}@github.com/Smallygon/$repo.git" "$tmp"; then
+              echo "Failed to clone $repo, skipping"
+              echo "::endgroup::"
+              continue
+            fi
+            cd "$tmp"
+            if [ ! -d vendor/smallcaps_shared ]; then
+              echo "$repo has no vendor/smallcaps_shared, skipping"
+              cd - >/dev/null
+              echo "::endgroup::"
+              continue
+            fi
+            cd vendor/smallcaps_shared
+            git fetch origin main
+            git checkout "$SHARED_SHA"
+            cd ../..
+            git add vendor/smallcaps_shared
+            if git diff --cached --quiet; then
+              echo "$repo already at $SHARED_SHA"
+            else
+              git commit -m "chore: bump vendor/smallcaps_shared to $SHARED_SHA"
+              git push origin main || echo "Push failed for $repo"
+            fi
+            cd - >/dev/null
+            rm -rf "$tmp"
+            echo "::endgroup::"
           done
-          echo "All dependent services triggered!"
